@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+
+  <meta charset="UTF-8">
 
   <meta
     name="viewport"
@@ -12,121 +14,157 @@
 
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
-
   <style>
 
-    body {
-
-      font-family: Arial, sans-serif;
-
-      max-width: 500px;
-
-      margin: 0 auto;
-
-      padding: 20px;
-
-      background: #f5f5f5;
-
+    * {
+      box-sizing: border-box;
     }
 
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #222;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
 
     h1 {
-
-      text-align: center;
-
-      margin-bottom: 25px;
-
+      margin: 0 0 5px;
+      font-size: 28px;
     }
 
+    .subtitle {
+      color: #666;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 7px;
+    }
 
     input,
-    select,
-    button {
-
+    select {
       width: 100%;
-
-      box-sizing: border-box;
-
-      padding: 14px;
-
-      margin-bottom: 12px;
-
-      font-size: 16px;
-
-      border-radius: 8px;
-
+      padding: 13px;
       border: 1px solid #ccc;
-
+      border-radius: 8px;
+      font-size: 16px;
+      background: white;
     }
 
+    .field {
+      margin-bottom: 18px;
+    }
 
     button {
-
-      background: #111;
-
-      color: white;
-
+      width: 100%;
       border: none;
-
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 16px;
       font-weight: bold;
-
+      cursor: pointer;
     }
 
+    #startButton {
+      background: #111;
+      color: white;
+    }
+
+    #stopButton {
+      background: #ddd;
+      color: #222;
+      margin-top: 10px;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
     #reader {
-
       width: 100%;
-
       margin-top: 15px;
-
-      background: white;
-
-      border-radius: 10px;
-
-      overflow: hidden;
-
     }
-
-
-    #result {
-
-      margin-top: 15px;
-
-      padding: 15px;
-
-      text-align: center;
-
-      border-radius: 8px;
-
-      background: white;
-
-      font-weight: bold;
-
-    }
-
-
-    .success {
-
-      background: #d4edda !important;
-
-      color: #155724;
-
-    }
-
-
-    .error {
-
-      background: #f8d7da !important;
-
-      color: #721c24;
-
-    }
-
 
     .loading {
-
+      text-align: center;
+      padding: 15px;
       color: #666;
+    }
 
+    .result {
+      display: none;
+      border-radius: 10px;
+      padding: 18px;
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    .result.success {
+      display: block;
+      background: #e7f7ed;
+      border: 1px solid #86d7a5;
+      color: #176b36;
+    }
+
+    .result.error {
+      display: block;
+      background: #fdeaea;
+      border: 1px solid #ed9b9b;
+      color: #9b1c1c;
+    }
+
+    .result.warning {
+      display: block;
+      background: #fff5d9;
+      border: 1px solid #e5c56b;
+      color: #765900;
+    }
+
+    .result-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .result-message {
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .participant {
+      font-size: 22px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #777;
+      margin-top: 10px;
+    }
+
+    .status {
+      font-size: 14px;
+      color: #666;
+      margin-top: 10px;
     }
 
   </style>
@@ -136,83 +174,188 @@
 
 <body>
 
+  <div class="container">
 
-<h1>Workshop Check-in</h1>
+    <div class="card">
 
+      <h1>Workshop Check-in</h1>
 
-<input
-  id="admin"
-  type="text"
-  placeholder="Admin name"
-/>
-
-
-<select id="workshop">
-
-  <option value="">
-    Loading workshops...
-  </option>
-
-</select>
+      <div class="subtitle">
+        Scan participant QR code
+      </div>
 
 
-<button onclick="startScanner()">
+      <div class="field">
 
-  START SCANNER
+        <label for="admin">
+          Admin Name
+        </label>
 
-</button>
+        <input
+          id="admin"
+          type="text"
+          placeholder="Enter your name"
+          autocomplete="off"
+        >
+
+      </div>
 
 
-<div id="reader"></div>
+      <div class="field">
+
+        <label for="workshop">
+          Workshop
+        </label>
+
+        <select id="workshop">
+
+          <option value="">
+            Loading workshops...
+          </option>
+
+        </select>
+
+      </div>
 
 
-<div
-  id="result"
-  class="loading"
->
+      <button
+        id="startButton"
+        onclick="startScanner()"
+        disabled
+      >
+        START SCANNER
+      </button>
 
-  Loading workshops...
 
-</div>
+      <button
+        id="stopButton"
+        onclick="stopScanner()"
+        style="display:none;"
+      >
+        STOP SCANNER
+      </button>
+
+
+      <div id="reader"></div>
+
+      <div
+        id="scannerStatus"
+        class="status"
+      >
+        Loading workshop list...
+      </div>
+
+    </div>
+
+
+    <div
+      id="result"
+      class="result"
+    >
+
+      <div
+        id="resultTitle"
+        class="result-title"
+      ></div>
+
+      <div
+        id="resultMessage"
+        class="result-message"
+      ></div>
+
+      <div
+        id="participantName"
+        class="participant"
+      ></div>
+
+      <div
+        id="resultExtra"
+        class="small"
+      ></div>
+
+    </div>
+
+  </div>
 
 
 <script>
 
-
-// =====================================================
-// APPS SCRIPT URL
-// =====================================================
-
+/*
+ * YOUR APPS SCRIPT URL
+ */
 const API_URL =
   "https://script.google.com/a/macros/tripledotstudios.com/s/AKfycbyyRVmPjI2a6U4_dwfHSp-XslXDEye3EX7LmuYGYfPqePnUW6CoGjqQOaBwl6t2vuQW/exec";
 
 
-// =====================================================
-// JSONP REQUEST
-// =====================================================
+let scanner = null;
 
-function jsonp(
-  url,
-  callback
-) {
+let scannerRunning = false;
+
+let processingScan = false;
+
+let callbackCounter = 0;
+
+
+/*
+ * Load workshops when page opens.
+ */
+window.onload = function() {
+
+  loadWorkshops();
+
+};
+
+
+/*
+ * LOAD WORKSHOPS
+ *
+ * Uses JSONP instead of fetch().
+ */
+function loadWorkshops() {
+
+  setStatus(
+    "Loading workshop list..."
+  );
 
   const callbackName =
-    "jsonp_" +
+    "workshopCallback_" +
     Date.now() +
     "_" +
-    Math.floor(
-      Math.random() * 100000
-    );
+    (++callbackCounter);
 
 
   window[callbackName] =
     function(data) {
 
-      delete window[callbackName];
+      try {
 
-      script.remove();
+        delete window[callbackName];
 
-      callback(data);
+        if (
+          data &&
+          data.success &&
+          Array.isArray(data.workshops)
+        ) {
+
+          populateWorkshops(
+            data.workshops
+          );
+
+        } else {
+
+          showLoadError(
+            data && data.message
+              ? data.message
+              : "Unable to load workshops."
+          );
+        }
+
+      } catch (error) {
+
+        showLoadError(
+          error.message
+        );
+      }
 
     };
 
@@ -222,9 +365,12 @@ function jsonp(
 
 
   script.src =
-    url +
+    API_URL +
+    "?action=workshops" +
     "&callback=" +
-    callbackName;
+    callbackName +
+    "&_=" +
+    Date.now();
 
 
   script.onerror =
@@ -232,142 +378,191 @@ function jsonp(
 
       delete window[callbackName];
 
-      script.remove();
-
-      callback({
-
-        success: false,
-
-        status: "ERROR",
-
-        message:
-          "Could not connect to server."
-
-      });
+      showLoadError(
+        "Unable to connect to the workshop system."
+      );
 
     };
 
 
-  document
-    .body
-    .appendChild(script);
+  document.body.appendChild(script);
+
+
+  /*
+   * If Google redirects the request to a login page
+   * instead of returning JSONP, this timeout gives
+   * a clearer message.
+   */
+  setTimeout(function() {
+
+    if (
+      document.getElementById(
+        "workshop"
+      ).options.length <= 1
+    ) {
+
+      if (
+        document.getElementById(
+          "workshop"
+        ).value === ""
+      ) {
+
+        showLoadError(
+          "Unable to load workshops. Please check the Apps Script deployment access."
+        );
+      }
+
+    }
+
+  }, 8000);
 
 }
 
 
-// =====================================================
-// LOAD WORKSHOPS
-// =====================================================
+/*
+ * PUT WORKSHOPS INTO DROPDOWN
+ */
+function populateWorkshops(
+  workshops
+) {
 
-function loadWorkshops() {
-
-  const dropdown =
+  const select =
     document.getElementById(
       "workshop"
     );
 
 
-  const result =
+  select.innerHTML = "";
+
+
+  const firstOption =
+    document.createElement("option");
+
+  firstOption.value = "";
+
+  firstOption.textContent =
+    "Select workshop";
+
+  select.appendChild(
+    firstOption
+  );
+
+
+  if (
+    workshops.length === 0
+  ) {
+
+    const option =
+      document.createElement("option");
+
+    option.value = "";
+
+    option.textContent =
+      "No active workshops";
+
+    select.appendChild(
+      option
+    );
+
+    setStatus(
+      "No active workshops found."
+    );
+
+    return;
+  }
+
+
+  workshops.forEach(
+    function(workshop) {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        workshop.id;
+
+      option.textContent =
+        workshop.name +
+        (
+          workshop.capacity > 0
+            ? " (" +
+              workshop.capacity +
+              " pax)"
+            : ""
+        );
+
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+
+  document
+    .getElementById(
+      "startButton"
+    )
+    .disabled = false;
+
+
+  setStatus(
+    workshops.length +
+    " workshop(s) available."
+  );
+}
+
+
+/*
+ * LOAD ERROR
+ */
+function showLoadError(
+  message
+) {
+
+  const select =
     document.getElementById(
-      "result"
+      "workshop"
     );
 
 
-  const url =
-    API_URL +
-    "?action=workshops";
+  select.innerHTML = "";
 
 
-  jsonp(
-    url,
-    function(data) {
+  const option =
+    document.createElement(
+      "option"
+    );
+
+  option.value = "";
+
+  option.textContent =
+    "Unable to load workshops";
+
+  select.appendChild(
+    option
+  );
 
 
-      console.log(
-        "Workshop response:",
-        data
-      );
+  document
+    .getElementById(
+      "startButton"
+    )
+    .disabled = true;
 
 
-      if (
-        !data ||
-        !data.workshops
-      ) {
-
-        dropdown.innerHTML =
-          '<option value="">Unable to load workshops</option>';
-
-
-        result.className =
-          "error";
-
-
-        result.innerHTML =
-          "Unable to load workshops.";
-
-        return;
-
-      }
-
-
-      dropdown.innerHTML =
-        '<option value="">Select workshop</option>';
-
-
-      data.workshops.forEach(
-        function(workshop) {
-
-          const option =
-            document.createElement(
-              "option"
-            );
-
-
-          option.value =
-            workshop.id;
-
-
-          option.textContent =
-            workshop.name +
-            " (" +
-            workshop.capacity +
-            " pax)";
-
-
-          dropdown.appendChild(
-            option
-          );
-
-        }
-      );
-
-
-      result.className = "";
-
-      result.innerHTML =
-        "Select a workshop and start scanning";
-
-    }
+  setStatus(
+    message
   );
 
 }
 
 
-// =====================================================
-// SCANNER
-// =====================================================
-
-let scanner = null;
-
-let scannerRunning = false;
-
-let processing = false;
-
-
-// =====================================================
-// START SCANNER
-// =====================================================
-
+/*
+ * START QR SCANNER
+ */
 async function startScanner() {
 
   const admin =
@@ -380,28 +575,27 @@ async function startScanner() {
   const workshop =
     document
       .getElementById("workshop")
-      .value;
+      .value
+      .trim();
 
 
   if (!admin) {
 
     alert(
-      "Please enter admin name."
+      "Please enter your name first."
     );
 
     return;
-
   }
 
 
   if (!workshop) {
 
     alert(
-      "Please select a workshop."
+      "Please select a workshop first."
     );
 
     return;
-
   }
 
 
@@ -410,16 +604,7 @@ async function startScanner() {
   }
 
 
-  const result =
-    document.getElementById(
-      "result"
-    );
-
-
-  result.className = "";
-
-  result.innerHTML =
-    "Opening camera...";
+  processingScan = false;
 
 
   scanner =
@@ -430,9 +615,11 @@ async function startScanner() {
 
   try {
 
+    /*
+     * Get available cameras.
+     */
     const cameras =
-      await Html5Qrcode
-        .getCameras();
+      await Html5Qrcode.getCameras();
 
 
     if (
@@ -443,15 +630,15 @@ async function startScanner() {
       throw new Error(
         "No camera found."
       );
-
     }
 
 
+    /*
+     * Try to find rear camera.
+     */
     let cameraId =
       cameras[0].id;
 
-
-    // Prefer rear camera
 
     for (
       let i = 0;
@@ -476,9 +663,7 @@ async function startScanner() {
           cameras[i].id;
 
         break;
-
       }
-
     }
 
 
@@ -487,22 +672,31 @@ async function startScanner() {
       cameraId,
 
       {
-
         fps: 10,
 
         qrbox: {
-
           width: 250,
-
           height: 250
+        },
 
-        }
+        aspectRatio: 1.0
 
       },
 
-      onScanSuccess,
+      function(decodedText) {
 
-      function() {}
+        handleQRCode(
+          decodedText
+        );
+
+      },
+
+      function(errorMessage) {
+
+        /*
+         * Ignore normal scanning errors.
+         */
+      }
 
     );
 
@@ -510,45 +704,76 @@ async function startScanner() {
     scannerRunning = true;
 
 
-    result.className = "";
+    document
+      .getElementById(
+        "startButton"
+      )
+      .style.display = "none";
 
 
-    result.innerHTML =
-      "Camera ready — scan participant QR";
+    document
+      .getElementById(
+        "stopButton"
+      )
+      .style.display = "block";
+
+
+    setStatus(
+      "Scanner is ready. Point the camera at the QR code."
+    );
 
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
 
 
-    result.className =
-      "error";
+    if (scanner) {
+
+      try {
+
+        await scanner.clear();
+
+      } catch (e) {}
+
+      scanner = null;
+    }
 
 
-    result.innerHTML =
-      "Unable to open camera.<br><br>" +
-      error.message;
+    setStatus(
+      "Camera error: " +
+      error.message
+    );
+
+
+    alert(
+      "Unable to open camera.\n\n" +
+      error.message
+    );
 
   }
 
 }
 
 
-// =====================================================
-// QR SCANNED
-// =====================================================
-
-function onScanSuccess(
+/*
+ * HANDLE QR CODE
+ */
+function handleQRCode(
   decodedText
 ) {
 
-  if (processing) {
+  if (
+    processingScan
+  ) {
+
     return;
   }
 
 
-  processing = true;
+  processingScan = true;
 
 
   const admin =
@@ -561,23 +786,84 @@ function onScanSuccess(
   const workshop =
     document
       .getElementById("workshop")
-      .value;
+      .value
+      .trim();
 
 
-  const result =
-    document.getElementById(
-      "result"
+  if (!admin || !workshop) {
+
+    processingScan = false;
+
+    return;
+  }
+
+
+  setStatus(
+    "Checking QR code..."
+  );
+
+
+  showResult(
+    "Checking...",
+    "Please wait...",
+    "",
+    "",
+    "warning"
+  );
+
+
+  /*
+   * Send check-in request using JSONP.
+   */
+  const callbackName =
+    "checkinCallback_" +
+    Date.now() +
+    "_" +
+    (++callbackCounter);
+
+
+  window[callbackName] =
+    function(data) {
+
+      try {
+
+        delete window[callbackName];
+
+        handleCheckinResult(
+          data
+        );
+
+      } catch (error) {
+
+        console.error(
+          error
+        );
+
+        showResult(
+          "ERROR",
+          error.message,
+          "",
+          "",
+          "error"
+        );
+
+        setStatus(
+          "Ready for next scan."
+        );
+
+        processingScan = false;
+      }
+
+    };
+
+
+  const script =
+    document.createElement(
+      "script"
     );
 
 
-  result.className = "";
-
-
-  result.innerHTML =
-    "Checking QR...";
-
-
-  const url =
+  script.src =
     API_URL +
     "?action=checkin" +
     "&qr=" +
@@ -591,99 +877,457 @@ function onScanSuccess(
     "&admin=" +
     encodeURIComponent(
       admin
+    ) +
+    "&callback=" +
+    callbackName +
+    "&_=" +
+    Date.now();
+
+
+  script.onerror =
+    function() {
+
+      delete window[callbackName];
+
+      showResult(
+        "CONNECTION ERROR",
+        "Unable to connect to the check-in system.",
+        "",
+        "",
+        "error"
+      );
+
+      setStatus(
+        "Please check your internet connection."
+      );
+
+      processingScan = false;
+
+    };
+
+
+  document.body.appendChild(
+    script
+  );
+
+
+  /*
+   * Safety timeout.
+   */
+  setTimeout(function() {
+
+    if (
+      window[callbackName]
+    ) {
+
+      delete window[callbackName];
+
+      showResult(
+        "TIMEOUT",
+        "The check-in system did not respond.",
+        "",
+        "",
+        "error"
+      );
+
+      setStatus(
+        "Please try scanning again."
+      );
+
+      processingScan = false;
+    }
+
+  }, 10000);
+
+}
+
+
+/*
+ * HANDLE CHECK-IN RESPONSE
+ */
+function handleCheckinResult(
+  data
+) {
+
+  if (!data) {
+
+    showResult(
+      "ERROR",
+      "No response received from the server.",
+      "",
+      "",
+      "error"
     );
 
+    processingScan = false;
 
-  jsonp(
-    url,
-    function(data) {
+    return;
+  }
 
-      console.log(
-        "Check-in response:",
-        data
+
+  switch (
+    String(
+      data.status || ""
+    ).toUpperCase()
+  ) {
+
+
+    case "APPROVED":
+
+      showResult(
+
+        "CHECK-IN SUCCESSFUL",
+
+        data.message ||
+          "Participant has been checked in.",
+
+        data.name ||
+          "",
+
+        data.workshop
+          ? data.workshop +
+            (
+              data.currentCount &&
+              data.capacity
+                ? " • " +
+                  data.currentCount +
+                  "/" +
+                  data.capacity
+                : ""
+            )
+          : "",
+
+        "success"
       );
 
 
-      if (
-        data.status ===
-        "APPROVED"
-      ) {
-
-        result.className =
-          "success";
-
-
-        result.innerHTML =
-          "✓ CHECK-IN SUCCESSFUL" +
-          "<br><br>" +
-          data.name;
-
-      }
-
-
-      else if (
-        data.status ===
-        "ALREADY CHECKED IN"
-      ) {
-
-        result.className =
-          "error";
-
-
-        result.innerHTML =
-          "✕ ALREADY CHECKED IN" +
-          "<br><br>" +
-          data.message;
-
-      }
-
-
-      else {
-
-        result.className =
-          "error";
-
-
-        result.innerHTML =
-          "✕ " +
-          (
-            data.status ||
-            "ERROR"
-          ) +
-          "<br><br>" +
-          (
-            data.message ||
-            "Check-in failed."
-          );
-
-      }
-
-
-      setTimeout(
-        function() {
-
-          processing = false;
-
-        },
-        2500
+      setStatus(
+        "Ready for next scan."
       );
 
-    }
+      break;
+
+
+    case "ALREADY CHECKED IN":
+
+      showResult(
+
+        "ALREADY CHECKED IN",
+
+        data.message ||
+          "This participant has already checked in.",
+
+        "",
+
+        "",
+
+        "warning"
+      );
+
+
+      setStatus(
+        "Ready for next scan."
+      );
+
+      break;
+
+
+    case "INVALID QR":
+
+      showResult(
+
+        "INVALID QR",
+
+        data.message ||
+          "This QR code is not registered.",
+
+        "",
+
+        "",
+
+        "error"
+      );
+
+
+      setStatus(
+        "Ready for next scan."
+      );
+
+      break;
+
+
+    case "WORKSHOP FULL":
+
+      showResult(
+
+        "WORKSHOP FULL",
+
+        data.message ||
+          "This workshop is already full.",
+
+        "",
+
+        "",
+
+        "warning"
+      );
+
+
+      setStatus(
+        "Workshop is full."
+      );
+
+      break;
+
+
+    case "WORKSHOP CLOSED":
+
+      showResult(
+
+        "WORKSHOP CLOSED",
+
+        data.message ||
+          "This workshop is currently closed.",
+
+        "",
+
+        "",
+
+        "warning"
+      );
+
+
+      setStatus(
+        "Workshop is closed."
+      );
+
+      break;
+
+
+    case "INVALID WORKSHOP":
+
+      showResult(
+
+        "INVALID WORKSHOP",
+
+        data.message ||
+          "This workshop does not exist.",
+
+        "",
+
+        "",
+
+        "error"
+      );
+
+
+      setStatus(
+        "Please select another workshop."
+      );
+
+      break;
+
+
+    default:
+
+      showResult(
+
+        data.status ||
+          "ERROR",
+
+        data.message ||
+          "Something went wrong.",
+
+        "",
+
+        "",
+
+        "error"
+      );
+
+
+      setStatus(
+        "Ready for next scan."
+      );
+
+  }
+
+
+  /*
+   * Prevent the same QR from being scanned
+   * repeatedly within the next 2 seconds.
+   */
+  setTimeout(
+    function() {
+
+      processingScan = false;
+
+    },
+    2000
   );
 
 }
 
 
-// =====================================================
-// LOAD WORKSHOPS
-// =====================================================
+/*
+ * DISPLAY RESULT
+ */
+function showResult(
+  title,
+  message,
+  participant,
+  extra,
+  type
+) {
 
-loadWorkshops();
+  const result =
+    document.getElementById(
+      "result"
+    );
 
+
+  result.className =
+    "result " +
+    type;
+
+
+  document
+    .getElementById(
+      "resultTitle"
+    )
+    .textContent =
+      title;
+
+
+  document
+    .getElementById(
+      "resultMessage"
+    )
+    .textContent =
+      message;
+
+
+  document
+    .getElementById(
+      "participantName"
+    )
+    .textContent =
+      participant;
+
+
+  document
+    .getElementById(
+      "resultExtra"
+    )
+    .textContent =
+      extra;
+
+}
+
+
+/*
+ * STATUS TEXT
+ */
+function setStatus(
+  message
+) {
+
+  document
+    .getElementById(
+      "scannerStatus"
+    )
+    .textContent =
+      message;
+
+}
+
+
+/*
+ * STOP SCANNER
+ */
+async function stopScanner() {
+
+  if (!scanner) {
+    return;
+  }
+
+
+  try {
+
+    if (scannerRunning) {
+
+      await scanner.stop();
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      error
+    );
+
+  }
+
+
+  try {
+
+    await scanner.clear();
+
+  } catch (error) {
+
+    console.error(
+      error
+    );
+
+  }
+
+
+  scanner = null;
+
+  scannerRunning = false;
+
+  processingScan = false;
+
+
+  document
+    .getElementById(
+      "startButton"
+    )
+    .style.display = "block";
+
+
+  document
+    .getElementById(
+      "stopButton"
+    )
+    .style.display = "none";
+
+
+  setStatus(
+    "Scanner stopped."
+  );
+
+}
+
+
+/*
+ * Stop scanner if the page is closed.
+ */
+window.addEventListener(
+  "beforeunload",
+  function() {
+
+    if (scanner) {
+
+      scanner.stop()
+        .catch(function() {});
+
+    }
+
+  }
+);
 
 </script>
 
-
 </body>
-
 </html>
