@@ -2,8 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Workshop QR Scanner</title>
+  <title>Workshop Check-in</title>
 
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
@@ -11,23 +10,23 @@
     body {
       font-family: Arial, sans-serif;
       max-width: 500px;
-      margin: auto;
+      margin: 0 auto;
       padding: 20px;
-      text-align: center;
       background: #f5f5f5;
     }
 
     h1 {
-      font-size: 24px;
+      text-align: center;
+      margin-bottom: 25px;
     }
 
-    select,
     input,
+    select,
     button {
       width: 100%;
       box-sizing: border-box;
       padding: 14px;
-      margin: 8px 0;
+      margin-bottom: 12px;
       font-size: 16px;
       border-radius: 8px;
       border: 1px solid #ccc;
@@ -38,9 +37,11 @@
       color: white;
       border: none;
       font-weight: bold;
+      cursor: pointer;
     }
 
     #reader {
+      width: 100%;
       margin-top: 15px;
       background: white;
       border-radius: 10px;
@@ -50,9 +51,10 @@
     #result {
       margin-top: 15px;
       padding: 15px;
+      text-align: center;
       border-radius: 8px;
-      font-weight: bold;
       background: white;
+      font-weight: bold;
     }
 
     .success {
@@ -64,68 +66,102 @@
       background: #f8d7da !important;
       color: #721c24;
     }
+
+    .loading {
+      color: #666;
+    }
   </style>
 </head>
 
 <body>
 
-  <h1>Workshop Check-in</h1>
+<h1>Workshop Check-in</h1>
 
-  <input
-    type="text"
-    id="admin"
-    placeholder="Admin name"
-  >
+<input
+  id="admin"
+  type="text"
+  placeholder="Admin name"
+/>
 
-  <select id="workshop">
-    <option value="">Loading workshops...</option>
-  </select>
+<select id="workshop">
+  <option value="">Loading workshops...</option>
+</select>
 
-  <button onclick="startScanner()">
-    START SCANNER
-  </button>
+<button id="startButton" onclick="startScanner()">
+  START SCANNER
+</button>
 
-  <div id="reader"></div>
+<div id="reader"></div>
 
-  <div id="result">
-    Ready to scan
-  </div>
+<div id="result" class="loading">
+  Loading...
+</div>
+
 
 <script>
 
-const API_URL = https://script.google.com/a/macros/tripledotstudios.com/s/AKfycbyyRVmPjI2a6U4_dwfHSp-XslXDEye3EX7LmuYGYfPqePnUW6CoGjqQOaBwl6t2vuQW/exec;
+// =====================================================
+// APPS SCRIPT URL
+// =====================================================
 
-let scanner;
-let scanning = false;
-let processing = false;
+const API_URL =
+  "https://script.google.com/a/macros/tripledotstudios.com/s/AKfycbyyRVmPjI2a6U4_dwfHSp-XslXDEye3EX7LmuYGYfPqePnUW6CoGjqQOaBwl6t2vuQW/exec";
 
 
-// ==============================
+// =====================================================
 // LOAD WORKSHOPS
-// ==============================
+// =====================================================
 
 async function loadWorkshops() {
 
+  const dropdown =
+    document.getElementById("workshop");
+
+  const result =
+    document.getElementById("result");
+
   try {
 
-    const response = await fetch(
-      API_URL + "?action=workshops"
-    );
+    const response =
+      await fetch(
+        API_URL + "?action=workshops"
+      );
 
-    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(
+        "HTTP error " + response.status
+      );
+    }
 
-    const dropdown =
-      document.getElementById("workshop");
+    const data =
+      await response.json();
+
+    console.log("Workshop API:", data);
+
+
+    if (
+      !data.workshops ||
+      !Array.isArray(data.workshops)
+    ) {
+
+      throw new Error(
+        "Workshop data is invalid."
+      );
+
+    }
+
 
     dropdown.innerHTML =
       '<option value="">Select workshop</option>';
 
-    data.workshops.forEach(workshop => {
+
+    data.workshops.forEach(function(workshop) {
 
       const option =
         document.createElement("option");
 
-      option.value = workshop.id;
+      option.value =
+        workshop.id;
 
       option.textContent =
         workshop.name +
@@ -137,116 +173,197 @@ async function loadWorkshops() {
 
     });
 
+
+    result.className = "";
+
+    result.innerHTML =
+      "Select a workshop and start scanning";
+
+
   } catch (error) {
 
-    document.getElementById("result").innerHTML =
-      "Unable to load workshops.";
-
     console.error(error);
+
+    dropdown.innerHTML =
+      '<option value="">Unable to load workshops</option>';
+
+    result.className =
+      "error";
+
+    result.innerHTML =
+      "Unable to load workshops.<br><br>" +
+      error.message;
 
   }
 
 }
 
 
-// ==============================
-// START CAMERA
-// ==============================
+// =====================================================
+// SCANNER
+// =====================================================
+
+let scanner = null;
+let scannerRunning = false;
+let processing = false;
+
 
 async function startScanner() {
 
-  const workshop =
-    document.getElementById("workshop").value;
-
   const admin =
-    document.getElementById("admin").value.trim();
+    document
+      .getElementById("admin")
+      .value
+      .trim();
+
+  const workshop =
+    document
+      .getElementById("workshop")
+      .value;
+
 
   if (!admin) {
-    alert("Please enter admin name.");
+
+    alert(
+      "Please enter admin name."
+    );
+
     return;
+
   }
+
 
   if (!workshop) {
-    alert("Please select a workshop.");
+
+    alert(
+      "Please select a workshop."
+    );
+
+    return;
+
+  }
+
+
+  if (scannerRunning) {
     return;
   }
 
-  if (scanning) {
-    return;
-  }
+
+  const result =
+    document.getElementById("result");
+
+  result.className = "";
+
+  result.innerHTML =
+    "Opening camera...";
+
 
   scanner =
     new Html5Qrcode("reader");
+
 
   try {
 
     const cameras =
       await Html5Qrcode.getCameras();
 
-    if (!cameras || cameras.length === 0) {
 
-      document.getElementById("result").innerHTML =
-        "No camera found.";
+    if (
+      !cameras ||
+      cameras.length === 0
+    ) {
 
-      return;
+      throw new Error(
+        "No camera found."
+      );
+
     }
 
-    // Try to use the rear camera
-    let cameraId =
-      cameras[cameras.length - 1].id;
 
-    for (const camera of cameras) {
+    // Prefer rear camera
+
+    let cameraId =
+      cameras[0].id;
+
+
+    for (
+      let i = 0;
+      i < cameras.length;
+      i++
+    ) {
 
       const label =
-        (camera.label || "").toLowerCase();
+        (
+          cameras[i].label || ""
+        ).toLowerCase();
+
 
       if (
         label.includes("back") ||
         label.includes("rear") ||
         label.includes("environment")
       ) {
-        cameraId = camera.id;
+
+        cameraId =
+          cameras[i].id;
+
         break;
+
       }
 
     }
 
+
     await scanner.start(
+
       cameraId,
 
       {
         fps: 10,
+
         qrbox: {
           width: 250,
           height: 250
         }
+
       },
 
       onScanSuccess,
 
-      onScanError
+      function() {
+        // Normal scanning errors are ignored
+      }
+
     );
 
-    scanning = true;
 
-    document.getElementById("result").innerHTML =
-      "Camera ready — scan QR";
+    scannerRunning = true;
+
+    result.className = "";
+
+    result.innerHTML =
+      "Camera ready — scan participant QR";
+
 
   } catch (error) {
 
     console.error(error);
 
-    document.getElementById("result").innerHTML =
-      "Unable to open camera. Please allow camera permission.";
+    result.className =
+      "error";
+
+    result.innerHTML =
+      "Unable to open camera.<br><br>" +
+      error.message;
 
   }
 
 }
 
 
-// ==============================
+// =====================================================
 // QR SCANNED
-// ==============================
+// =====================================================
 
 async function onScanSuccess(decodedText) {
 
@@ -254,93 +371,145 @@ async function onScanSuccess(decodedText) {
     return;
   }
 
+
   processing = true;
 
-  const workshop =
-    document.getElementById("workshop").value;
 
   const admin =
-    document.getElementById("admin").value.trim();
+    document
+      .getElementById("admin")
+      .value
+      .trim();
 
-  document.getElementById("result").innerHTML =
-    "Checking...";
+
+  const workshop =
+    document
+      .getElementById("workshop")
+      .value;
+
+
+  const result =
+    document.getElementById("result");
+
+
+  result.className = "";
+
+  result.innerHTML =
+    "Checking QR...";
+
 
   try {
 
     const url =
       API_URL +
       "?action=checkin" +
-      "&qr=" + encodeURIComponent(decodedText) +
-      "&workshop=" + encodeURIComponent(workshop) +
-      "&admin=" + encodeURIComponent(admin);
+      "&qr=" +
+      encodeURIComponent(decodedText) +
+      "&workshop=" +
+      encodeURIComponent(workshop) +
+      "&admin=" +
+      encodeURIComponent(admin);
+
 
     const response =
       await fetch(url);
 
+
+    if (!response.ok) {
+
+      throw new Error(
+        "HTTP error " +
+        response.status
+      );
+
+    }
+
+
     const data =
       await response.json();
 
-    showResult(data);
+
+    console.log(
+      "Check-in response:",
+      data
+    );
+
+
+    if (
+      data.status ===
+      "APPROVED"
+    ) {
+
+      result.className =
+        "success";
+
+      result.innerHTML =
+        "✓ CHECK-IN SUCCESSFUL<br><br>" +
+        data.name;
+
+    }
+
+
+    else if (
+      data.status ===
+      "ALREADY CHECKED IN"
+    ) {
+
+      result.className =
+        "error";
+
+      result.innerHTML =
+        "✕ ALREADY CHECKED IN<br><br>" +
+        data.message;
+
+    }
+
+
+    else {
+
+      result.className =
+        "error";
+
+      result.innerHTML =
+        "✕ " +
+        data.status +
+        "<br><br>" +
+        (
+          data.message ||
+          "Check-in failed."
+        );
+
+    }
+
 
   } catch (error) {
 
     console.error(error);
 
-    document.getElementById("result").innerHTML =
-      "Connection error.";
+    result.className =
+      "error";
+
+    result.innerHTML =
+      "Connection error.<br><br>" +
+      error.message;
 
   }
 
-  // Prevent the same QR from being processed repeatedly
-  setTimeout(() => {
-    processing = false;
-  }, 2500);
+
+  setTimeout(
+    function() {
+      processing = false;
+    },
+    2500
+  );
 
 }
 
 
-// ==============================
-// SHOW RESULT
-// ==============================
+// =====================================================
+// LOAD WORKSHOPS ON PAGE OPEN
+// =====================================================
 
-function showResult(data) {
-
-  const result =
-    document.getElementById("result");
-
-  if (data.status === "APPROVED") {
-
-    result.className = "success";
-
-    result.innerHTML =
-      "✓ CHECK-IN SUCCESSFUL<br><br>" +
-      data.name;
-
-  } else {
-
-    result.className = "error";
-
-    result.innerHTML =
-      "✕ " +
-      data.status +
-      "<br><br>" +
-      (data.message || "");
-
-  }
-
-}
-
-
-// ==============================
-// SCAN ERROR
-// ==============================
-
-function onScanError(errorMessage) {
-  // Ignore normal scanning errors
-}
-
-
-// Load workshops immediately
 loadWorkshops();
 
 </script>
